@@ -1,6 +1,6 @@
 ---
-import MainLayout from "../../layout/MainLayout.astro";
-import PokemonCard from "../../components/pokemons/PokemonCard.astro";
+import MainLayout from "@layout/MainLayout.astro";
+import PokemonCard from "@components/pokemons/PokemonCard.astro";
 
 import type { PokemonListResponse } from "../../interfaces/pokemon-list.response";
 import type { GetStaticPaths } from "astro";
@@ -18,9 +18,15 @@ const { name } = Astro.params;
 const {url} =Astro.props;
 const id = url.toString().split("/").at(-2);
 const audioSource= `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`;
+const imageSource = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 ---
 
-<MainLayout title="Algun pokemon">
+<MainLayout title={`Pokemon #${id} ${name}`}
+      image={imageSource}
+    description={`Información del pokemon ${name}`
+    
+    }
+>
     <section class="mt-10 mx-10 flex flex-col justify-center items-center">
         
             <a href="/">Regresar</a>

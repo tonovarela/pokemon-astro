@@ -1,0 +1,36 @@
+---
+import type { GetStaticPaths } from "astro";
+import type { PokemonListResponse } from "@interfaces/pokemon-list.response";
+import MainLayout from "@layout/MainLayout.astro";
+import PokemonCard from "@components/pokemons/PokemonCard.astro";
+
+
+
+ 
+export const getStaticPaths = (async() => {
+    const resp = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");    
+    const {results} = await resp.json() as PokemonListResponse;
+    
+    return results.map(({name,url},i) => (
+        {
+            params: {id: url.split("/").at(-2)},            
+            props: {name,url}
+        }
+    ));
+}) satisfies GetStaticPaths;
+
+const {id} = Astro.params;
+const {name,url} = Astro.props;
+const audioSource= `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`;
+---
+
+<MainLayout title={name}>
+    <a  href="javascript:history.back()" class="text-blue-500">Back</a>    
+    <PokemonCard name={name} url={url} isBig />
+    <audio controls >
+        <source src={audioSource} type="audio/ogg" >
+        Tu navegar no soporta audio
+    </audio>    
+
+</MainLayout>
+
