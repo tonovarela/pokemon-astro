@@ -4,60 +4,155 @@ import PokemonCard from "@components/pokemons/PokemonCard.astro";
 import type { PokemonListResponse } from "../../interfaces/pokemon-list.response";
 import type { GetStaticPaths } from "astro";
 import Title from "@components/shared/Title.astro";
-import {Icon} from "astro-icon/components"
+import { Icon } from "astro-icon/components";
 
 
-export const getStaticPaths = (async() => {    
-    const resp = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");    
-    const  {results} = await resp.json() as PokemonListResponse;     
-    return results.map(({name,url}) => (
-        {
-            params: {name},
-            props: {name,url}
+export const getStaticPaths = (async () => {
+    const resp = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
+    const { results } = (await resp.json()) as PokemonListResponse;
+    return results.map(({ name, url }) => ({
+        params: { name },
+        props: { name, url },
     }));
-
 }) satisfies GetStaticPaths;
 const { name } = Astro.params;
-const {url} =Astro.props;
+const { url } = Astro.props;
 const id = url.toString().split("/").at(-2);
-const audioSource= `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`;
+const audioSource = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`;
 const imageSource = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 ---
 
-<MainLayout title={`Pokemon #${id} ${name}`}
-      image={imageSource}
-    description={`Información del pokemon ${name}`
-    
-    }
+<MainLayout
+    title={`Pokemon #${id} ${name}`}
+    image={imageSource}
+    description={`Información del pokemon ${name}`}
 >
-    <section class="mt-10 mx-10 flex flex-col justify-center items-center">        
+    <section class="mt-10 mx-10 flex flex-col justify-center items-center">
         <div class="flex flex-row">
             <div>
-                <button onclick="window.history.back()" class="text-blue-500" >Regresar</button>
-                <Title capitalize>{name}
-                    </Title>                                
-            </div>           
-            <button class="ml-4" id="btn-favorite">
-                <Icon name="heart-outline"  size={50}></Icon>
-                <Icon class="hidden" name="heart-fill"  size={50}></Icon>
-            </button>            
+                <button onclick="window.history.back()" class="text-blue-500"
+                    >Regresar</button
+                >
+                <Title capitalize>{name} </Title>
+            </div>
+            <button
+                class="ml-4"
+                id="btn-favorite"
+                data-name={name}
+                data-id={id}
+            >
+                <Icon data-outline name="heart-outline" size={50} />
+                <Icon data-fill class="hidden" name="heart-fill" size={50} />
+            </button>
         </div>
-        
-            <PokemonCard name={name} url={url} isBig />
-            <audio controls >
-                <source src={audioSource} type="audio/ogg" >
-                Tu navegar no soporta audio
-            </audio>        
-        
+
+        <PokemonCard name={name} url={url} isBig />
+        <audio controls>
+            <source src={audioSource} type="audio/ogg" />
+            Tu navegar no soporta audio
+        </audio>
     </section>
-    
 </MainLayout>
 
 <style>
     a {
         @apply hover:underline text-blue-500;
     }
-    #btn-favorite{
-        @apply hover:animate-pulse
+    #btn-favorite {
+        @apply hover:animate-pulse;
     }
 </style>
+<script>
+import type { FavoritePokemon } from "@interfaces/favorite-pokemon";
+import confetti from "canvas-confetti";
+    // document.addEventListener("astro:before-preparation",()=>{
+    //     console.log("before-preparation");
+    //   });
+    //   document.addEventListener("astro:after-preparation",()=>{
+    //     console.log("after-preparation");
+    //   });
+    //   document.addEventListener("astro:before-swap",()=>{
+    //     console.log("before-swap");
+    //   });
+    //   document.addEventListener("astro:after-swap",()=>{
+    //     console.log("after-swap");
+    //   });
+
+    //   document.addEventListener("astro:page-load",()=>{
+    //     console.log("page loaded");
+    //   });
+
+    
+
+       const handlePageLoad = () => {
+        let favoritePokemons: FavoritePokemon[] = JSON.parse(
+            localStorage.getItem("favoritePokemons") ?? "[]",
+        );
+        const btnFavorite = document.querySelector(
+            "#btn-favorite",
+        ) as HTMLButtonElement;
+        if (!btnFavorite) return;
+
+        const name = btnFavorite?.dataset.name ?? "";
+        const id = btnFavorite?.dataset.id ?? "";
+        const heartoutline = btnFavorite.querySelector(
+            "[data-outline]",
+        ) as HTMLElement;
+        const heartfill = btnFavorite.querySelector(
+            "[data-fill]",
+        ) as HTMLElement;
+
+        const initFavorite = () => {
+            const isFavorite = favoritePokemons.some(
+                (pokemon) => pokemon.id === Number(id),
+            );
+            if (isFavorite) {
+                heartoutline.classList.add("hidden");
+                heartfill.classList.remove("hidden");
+            }
+        };
+        const fireConfetti = () => {
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            const rect = btnFavorite.getBoundingClientRect();
+            const x = (rect.x + 0.5 * rect.width) / width;
+            const y = (rect.y + 0.5 * rect.height) / height;
+            const duration = 3000;
+            confetti({
+                particleCount: 500,
+                spread:300,
+                angle:270,                
+                origin: { x,y },
+                colors: ["#FF4500", "#008080", "#FFD700"],
+            });
+
+            setTimeout(() => confetti.reset(), duration);
+        };
+
+        const toogleFavorite = () => {
+            const isFavorite = favoritePokemons.some(
+                (pokemon) => pokemon.id === Number(id),
+            );
+
+            favoritePokemons = isFavorite
+                ? favoritePokemons.filter((pokemon) => pokemon.id !== +id)
+                : [...favoritePokemons, { name, id: +id }];
+            if (!isFavorite) {
+                fireConfetti();
+            }
+
+            localStorage.setItem(
+                "favoritePokemons",
+                JSON.stringify(favoritePokemons),
+            );
+        };
+
+        btnFavorite.addEventListener("click", () => {
+            heartoutline.classList.toggle("hidden");
+            heartfill.classList.toggle("hidden");
+            toogleFavorite();
+        });
+        initFavorite();
+    };
+    document.addEventListener("astro:page-load", handlePageLoad);
+</script>
