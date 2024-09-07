@@ -25,7 +25,9 @@ export const FavoritePokemonCard:Component<Props> = ({pokemon}) => {
         <Show when={isVisible()}>
         <div class="flex flex-col justify-center items-center">
             <a href={`/pokemons/${pokemon.name}`} >
-            <img src={imageSrc} alt={pokemon.name} class="w-32 h-32" />
+            <img src={imageSrc} alt={pokemon.name} class="w-32 h-32" 
+            style={`view-transition-name: ${pokemon.name}-image`}
+            />
             <p class="capitalize"> #{pokemon.id} {pokemon.name}</p>
             </a>
             <button onClick={()=>deleteFavoritePokemon(pokemon)} 
